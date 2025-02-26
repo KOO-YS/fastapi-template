@@ -1,0 +1,3 @@
+# Fast API
+fastapi # framework 설치
+uvicorn # ASGI(Asynchronous Server Gateway Interface) 서버로 FastAPI 실행
