@@ -132,8 +132,7 @@ return a + b
 
 ```shell
 uvicorn [./패키지경로.경로2.]main:app --reload
-#uvicorn app.main:app --reload
-uvicorn main:app --reload
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 Uvicorn 단독 실행은 싱글 프로세스로 동작하지만, Gunicorn과 함께 실행하면 멀티프로세싱 성능이 향상
