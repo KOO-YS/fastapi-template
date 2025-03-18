@@ -1,7 +1,5 @@
 from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import declarative_base
-
-Base = declarative_base()
+from app.db.database import Base
 
 # 클래스 User와 테이블 users를 매핑
 class User(Base):
