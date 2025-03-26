@@ -36,7 +36,70 @@
 
 ### Alembic 사용법 
 1. Alembic 설치
+```shell
+pip install alembic
+
+# docker-compose를 통해 postgresql을 미리 실행
+# docker compose -f docker-compose/postgresql.yml up
+```
+
 2. Alembic 환경 초기화
-3. 마이그레이션 스크립트 생성
+```shell
+alembic init alembic
+
+#  Creating directory 'fastapi-template/alembic' ...  done
+#  Creating directory 'fastapi-template/alembic/versions' ...  done
+#  Generating fastapi-template/alembic/script.py.mako ...  done
+#  Generating fastapi-template/alembic/env.py ...  done
+#  Generating fastapi-template/alembic/README ...  done
+#  Generating fastapi-template/alembic.ini ...  done
+#  Please edit configuration/connection/logging settings in 'fastapi-template/alembic.ini' before proceeding.
+```
+- alembic 폴더와 `alembic.ini` 파일 생성
+```shell
+alembic
+├── README
+├── env.py
+├── script.py.mako
+└── versions
+```
+
+- 1. `alembic.ini` 파일 내부 : 연동할 DB 정보 설정
+  ```shell
+  # 연동 DB INFO : docker-compose/postgresql.yml
+  sqlalchemy.url = postgresql://postgres:1234@localhost:5432/postgres
+  ```
+- 2. `alembic/env.py` 파일 내부 : target_metadata 가 None으로 되어 있는 곳을 찾아 SQLAlchemy Base 모델 연결 
+  ```shell
+  from app.db.database import Base
+  
+  target_metadata = Base.metadata
+  ```
+  
+
+3. 마이그레이션 생성
+- alembic/versions/ 폴더에 마이그레이션 스크립트가 생성됨
+```shell
+alembic revision --autogenerate -m "create user tables"
+
+#INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+#INFO  [alembic.runtime.migration] Will assume transactional DDL.
+#INFO  [alembic.ddl.postgresql] Detected sequence named 'users_id_seq' as owned by integer column 'users(id)', assuming SERIAL and omitting
+#INFO  [alembic.autogenerate.compare] Detected removed index 'ix_users_email' on 'users'
+#INFO  [alembic.autogenerate.compare] Detected removed index 'ix_users_id' on 'users'
+#INFO  [alembic.autogenerate.compare] Detected removed table 'users'
+#  Generating fastapi-template/alembic/versions/ed3ccb98a6aa_create_user_tables.py ...  done
+```
 4. 마이그레이션 실행
+```shell
+# 최신 버전까지 마이그레이션을 DB에 적용
+alembic upgrade head
+```
+
+- 이후 DB 설계가 변경 될 경우? -> 반복
+```shell
+alembic revision --autogenerate -m "..."
+alembic upgrade head
+```
+
 5. 롤백
