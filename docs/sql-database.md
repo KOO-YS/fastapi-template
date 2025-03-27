@@ -34,8 +34,8 @@
 - 롤백 및 복구 : 잘못된 스키마 변경으로 인해 문제가 발생했을 경우, 이전 버전으로 롤백하여 데이터베이스 복구 가능
 - 배포 자동화 : 버전 관리를 토해 스키마 변경 사항을 자동으로 배포환경에 적용 가능
 
-### Alembic 사용법 
-1. Alembic 설치
+## Alembic 사용법 
+### 1. Alembic 설치
 ```shell
 pip install alembic
 
@@ -43,7 +43,7 @@ pip install alembic
 # docker compose -f docker-compose/postgresql.yml up
 ```
 
-2. Alembic 환경 초기화
+### 2. Alembic 환경 초기화
 ```shell
 alembic init alembic
 
@@ -77,7 +77,7 @@ alembic
   ```
   
 
-3. 마이그레이션 생성
+### 3. 마이그레이션 생성
 - alembic/versions/ 폴더에 마이그레이션 스크립트가 생성됨
 ```shell
 alembic revision --autogenerate -m "create user tables"
@@ -90,16 +90,142 @@ alembic revision --autogenerate -m "create user tables"
 #INFO  [alembic.autogenerate.compare] Detected removed table 'users'
 #  Generating fastapi-template/alembic/versions/ed3ccb98a6aa_create_user_tables.py ...  done
 ```
-4. 마이그레이션 실행
+
+
+### 4. 마이그레이션 실행
 ```shell
 # 최신 버전까지 마이그레이션을 DB에 적용
 alembic upgrade head
 ```
 
-- 이후 DB 설계가 변경 될 경우? -> 반복
+- **이후 DB 설계가 변경 될 경우?** -> **반복**
 ```shell
 alembic revision --autogenerate -m "..."
 alembic upgrade head
 ```
 
-5. 롤백
+### 5. 롤백
+```shell
+# -1 : 한단계 전 버전으로 롤백
+alembic downgrade -1
+
+# <revision_id> : 특정 revision 버전으로 롤백
+alembic downgrade <revision_id>
+```
+
+### 6. 히스토리 확인
+```shell
+[21:03:38] [~/Documents/workspace-git/fastapi-template] [main ✖] ❱❱❱ alembic history --verbose
+#Rev: ed3ccb98a6aa (head)
+#Parent: <base>
+#Path: fastapi-template/alembic/versions/ed3ccb98a6aa_create_user_tables.py
+#
+#    create user tables
+#    
+#    Revision ID: ed3ccb98a6aa
+#    Revises: 
+#    Create Date: 2025-03-26 20:11:24.369548
+```
+
+### 7. 마이그레이션 정보 Export / Import
+
+**DDL**
+```shell
+# 전체 DDL 내보내기 (현재 모델 기준)
+# pip install sqlacodegen
+sqlacodegen postgresql://postgres:1234@localhost:5432/postgres --outfile schema.sql
+
+
+alembic upgrade head --sql > upgrade.sql
+alembic downgrade -1 --sql > downgrade.sql
+```
+
+> DDL export 결과
+```shell
+from sqlalchemy import Index, Integer, PrimaryKeyConstraint, String
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+class Base(DeclarativeBase):
+    pass
+
+
+class Users(Base):
+    __tablename__ = 'users'
+    __table_args__ = (
+        PrimaryKeyConstraint('id', name='users_pkey'),
+        Index('ix_users_email', 'email', unique=True),
+        Index('ix_users_id', 'id')
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String)
+    email: Mapped[str] = mapped_column(String)
+
+```
+
+**DML**
+- alembic 은 스키마(DDL) 전용 도구이기 때문에 데이터 백업은 따로 진행할 필요
+- pg_dump : 데이터베이스 백업 수행 명령어
+  - postgresql 이 설치될 때 함께 설치된다
+```shell
+# DML 내보내기 in container
+docker exec -it <container_id> pg_dump -U postgres --column-inserts --data-only postgres > backup.sql
+
+# 같은 방법으로 DDL 스키마만 백업하는 방법
+docker exec -it <container_id> pg_dump -U postgres -s postgres > backup-schema.sql
+```
+> DDL export 결과
+```shell
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 17.4 (Debian 17.4-1.pgdg120+2)
+-- Dumped by pg_dump version 17.4 (Debian 17.4-1.pgdg120+2)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Data for Name: alembic_version; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.alembic_version (version_num) VALUES ('ed3ccb98a6aa');
+
+
+--
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.users (id, name, email) VALUES (1, 'test', 'ee');
+
+
+--
+-- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.users_id_seq', 1, true);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+
+```
+
+---
+
+### `alembic_version` 테이블
+- alembic이 내부적으로 이 테이블을 사용하여 마이그레이션 상태 추적
+- 현재 적용된 revision ID가 저장되어 있음
+- UI에서 이 테이블을 직접 조회하면 현재 DB의 마이그레이션 상태를 알 수 있다
