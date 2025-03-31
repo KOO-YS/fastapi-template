@@ -9,3 +9,8 @@ python-dotenv~=1.0.1
 sqlalchemy
 psycopg2-binary
 alembic
+
+# AWS S3 storage service
+boto3
+python-multipart
+aiofiles
