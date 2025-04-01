@@ -22,3 +22,28 @@
     ]
 }
 ```
+
+```shell
+aws configure
+#AWS Access Key ID [****************ㅇㅇㅇ]: 입력
+#AWS Secret Access Key [****************ㅇㅇㅇ]: 입력
+#Default region name [ap-northeast-2]: ap-northeast-2
+#Default output format [json]: 
+
+aws sts assume-role --role-arn {arn-이름} --role-session-name {세션-이름} --duration-seconds 3600
+
+#{
+#    "Credentials": {
+#        "AccessKeyId": "임시키",
+#        "SecretAccessKey": "임시키",
+#        "SessionToken": "임시토큰",
+#        "Expiration": "2025-04-01T15:19:55+00:00"
+#    },
+#    "AssumedRoleUser": {
+#        "AssumedRoleId": "임시:{세션이름}",
+#        "Arn": "임시arn"
+#    }
+#}
+```
+
+
