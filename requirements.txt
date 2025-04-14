@@ -14,3 +14,6 @@ alembic
 boto3
 python-multipart
 aiofiles
+
+# asyncio 기반 RabbitMQ 클라이언트
+aio-pika
