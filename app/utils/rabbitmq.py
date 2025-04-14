@@ -1,12 +1,14 @@
 import logging
+from typing import Callable
 
-from aio_pika import connect_robust, Message, DeliveryMode
+from aio_pika import connect_robust, Message, DeliveryMode, IncomingMessage
 from aio_pika.abc import AbstractRobustConnection, AbstractRobustChannel
 
 from app.core.config import settings
 
 RABBITMQ_URL = f"amqp://{settings.RABBITMQ_USER}:{settings.RABBITMQ_PASSWORD}@{settings.RABBITMQ_HOST}:{settings.RABBITMQ_PORT}"
 
+# references : https://github.com/kieled/fastapi-aiopika-boilerplate
 class RabbitMQClient:
     connection: AbstractRobustConnection | None = None
     channel: AbstractRobustChannel | None = None
@@ -30,5 +32,12 @@ class RabbitMQClient:
 
     async def close(self):
         await self.connection.close()
+
+
+    async def setup_consumer(self, queue_name: str, callback: Callable[[IncomingMessage], None]):
+        connection = await self.connect()
+        queue = await self.channel.declare_queue(queue_name, durable=True)
+
+        await queue.consume(callback)
 
 rabbitmq_client = RabbitMQClient()
