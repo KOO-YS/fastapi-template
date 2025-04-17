@@ -6,14 +6,21 @@ pydantic-settings~=2.7.1
 python-dotenv~=1.0.1
 
 # PostgreSQL 연동
-sqlalchemy
+sqlalchemy~=2.0.39
 psycopg2-binary
-alembic
+alembic~=1.15.1
 
 # AWS S3 storage service
-boto3
+boto3~=1.37.23
 python-multipart
 aiofiles
 
 # asyncio 기반 RabbitMQ 클라이언트
-aio-pika
+aio-pika~=9.5.5
+
+#
+langchain~=0.3.21
+langchain-core~=0.3.41
+langchain_community~=0.3.21
+langchain-text-splitters~=0.3.8
+botocore~=1.37.23
